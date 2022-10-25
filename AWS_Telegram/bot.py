@@ -85,7 +85,7 @@ def graph(d1,store_id):
                         ha='center',
                         va='bottom',
                         fontsize=8,
-                        color=cor)
+                        color='black')
         if d1['prediction'].iloc[b] < np.quantile(d1['prediction'], 0.2, axis=0, overwrite_input=False):
             ax.annotate('R$ {}'.format(round(d1['prediction'].iloc[b])),
                         xy = (d1['date'].iloc[b], d1['prediction'].iloc[b]),
@@ -94,7 +94,7 @@ def graph(d1,store_id):
                         ha='center',
                         va='bottom',
                         fontsize=8,
-                        color=cor)
+                        color='black')
 
     ## Gráfico Linha
     past_line = ax.plot(df_raw['Date'], df_raw['Sales'], label='line', color = '#A2A1A3')
