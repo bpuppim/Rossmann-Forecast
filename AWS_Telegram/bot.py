@@ -10,6 +10,8 @@ from flask import Flask, request, Response
 import io
 import numpy as np 
 import matplotlib.pyplot as plt
+from datetime import date, time, datetime
+from numpy import datetime64
 
 # Enable logging
 logging.basicConfig(
@@ -43,6 +45,24 @@ def graph(d1,store_id):
     cor = '#0f89b9'
 
     fig, ax = plt.subplots(figsize=(8, 4))
+
+    # past information
+    # Load dataset
+    df_sales_raw = pd.read_csv('train.csv')
+    df_store_raw = pd.read_csv('store.csv')
+
+    # merge
+    df_raw = pd.merge(df_sales_raw ,df_store_raw ,how='left', on='Store')
+    df_raw['Date'] = pd.to_datetime( df_raw['Date'] )
+    df_raw = df_raw[(df_raw['Store'] == 22) & (df_raw['Date'] > np.datetime64('2015-06-15','s'))]
+
+    df_raw = df_raw[df_raw['Open'] != 0]
+    df_raw = df_raw[~df_raw['Open'].isnull()]
+    df_raw = df_raw[['Date','Sales']]
+
+    link_data = {'date' : df_raw.iloc[1,0],'prediction':df_raw.iloc[-1,1]}
+    d1 = d1.append(link_data, ignore_index=True)
+
     # calculation
     d2 = d1[['store', 'prediction']].groupby('store').sum().reset_index()
     
@@ -51,7 +71,7 @@ def graph(d1,store_id):
     ax.set_title('Esta loja {} venderá $ {:,.2f} nas próximas 6 semanas'.format(d2['store'].values[0], d2['prediction'].values[0]))
 
     # Gráfico Linha
-    candidato_line = ax.plot(d1['date'], d1['prediction'], label='line', color = cor)
+    pred_line = ax.plot(d1['date'], d1['prediction'], label='line', color = cor)
     # Margem de Erro 2 pontos percentuais
     ax.fill_between(d1['date'], d1['prediction']-320, d1['prediction']+320, alpha=0.5, linewidth=0, color = 'g')
     # Pontos
@@ -75,6 +95,11 @@ def graph(d1,store_id):
                         va='bottom',
                         fontsize=8,
                         color=cor)
+
+    ## Gráfico Linha
+    past_line = ax.plot(df_raw['Date'], df_raw['Sales'], label='line', color = '#A2A1A3')
+    # Pontos
+    ax.plot(df_raw['Date'], df_raw['Sales'], '--', color = '#A2A1A3')
 
     # Remover grids e eixos
     ax.spines['right'].set_visible(False)
