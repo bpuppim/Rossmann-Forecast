@@ -52,6 +52,29 @@ def graph(d1,store_id):
 
     # Gráfico Linha
     candidato_line = ax.plot(d1['date'], d1['prediction'], label='line', color = cor)
+    # Margem de Erro 2 pontos percentuais
+    ax.fill_between(d1['date'], d1['prediction']-320, d1['prediction']+320, alpha=0.5, linewidth=0, color = 'g')
+    # Pontos
+    ax.plot(d1['date'], d1['prediction'], '--', color = cor)
+    for b in range(len(d1['prediction'])):
+        if d1['prediction'].iloc[b] > np.quantile(d1['prediction'], 0.8, axis=0, overwrite_input=False):
+            ax.annotate('R$ {}'.format(round(d1['prediction'].iloc[b])),
+                        xy = (d1['date'].iloc[b], d1['prediction'].iloc[b]),
+                        xytext = (0, 10),
+                        textcoords="offset points",
+                        ha='center',
+                        va='bottom',
+                        fontsize=8,
+                        color=cor)
+        if d1['prediction'].iloc[b] < np.quantile(d1['prediction'], 0.2, axis=0, overwrite_input=False):
+            ax.annotate('R$ {}'.format(round(d1['prediction'].iloc[b])),
+                        xy = (d1['date'].iloc[b], d1['prediction'].iloc[b]),
+                        xytext = (-0, -10),
+                        textcoords="offset points",
+                        ha='center',
+                        va='bottom',
+                        fontsize=8,
+                        color=cor)
 
     # Remover grids e eixos
     ax.spines['right'].set_visible(False)
