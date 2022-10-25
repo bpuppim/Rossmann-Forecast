@@ -27,7 +27,7 @@ def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
     user = update.effective_user
     update.message.reply_markdown_v2(
-        fr'Olá {user.mention_markdown_v2()}\! \n informe store_id da loja que você quer saber o forecast \n apenas números',
+        fr'Olá {user.mention_markdown_v2()}\! informe a número da loja que deseja prever o forecast ',
         reply_markup=ForceReply(selective=True),
     )
 
