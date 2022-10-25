@@ -7,6 +7,9 @@ import os
 import json
 import requests
 from flask import Flask, request, Response
+import io
+import numpy as np 
+import matplotlib.pyplot as plt
 
 # Enable logging
 logging.basicConfig(
