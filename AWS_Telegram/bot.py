@@ -32,9 +32,85 @@ def help_command(update: Update, context: CallbackContext) -> None:
     update.message.reply_text('Help!')
 
 
-#def echo(update: Update, context: CallbackContext) -> None:
-    #"""Echo the user message."""
-    #update.message.reply_text(update.message.text)
+def graph(d1,store_id):
+    buf = io.BytesIO()
+    d1['date'] = pd.to_datetime( d1['date'] )
+
+    cinza = "#787878"
+    cor = '#0f89b9'
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    # calculation
+    d2 = d1[['store', 'prediction']].groupby('store').sum().reset_index()
+    
+    # Título
+    fig.suptitle('Sales forecasting: Store {}'.format(store_id), fontsize=14, fontweight='bold', color=cor)
+    ax.set_title('Esta loja {} venderá $ {:,.2f} nas próximas 6 semanas'.format(d2['store'].values[0], d2['prediction'].values[0]))
+
+    # Gráfico Linha
+    candidato_line = ax.plot(d1['date'], d1['prediction'], label='line', color = cor)
+
+    # Remover grids e eixos
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+
+    fig.tight_layout()
+    fig.savefig(buf, format='png')
+    plt.close(fig)
+
+    return buf
+
+def  echo2(update: Update, context: CallbackContext) -> None:
+    store_id = update.message.text
+    store_id = int(store_id)
+    
+     # load test dataset
+    df10 = pd.read_csv('test.csv')
+    df_store_raw = pd.read_csv('store.csv')
+
+    # merge test dataset + store
+    df_test = pd.merge(df10, df_store_raw, how='left', on='Store')
+
+    # choose store for prediction
+    df_test = df_test[df_test['Store'] == store_id ]
+    # df_test = df_test[df_test['Store'].isin( [8] )]
+
+    # remove closed days
+    df_test = df_test[df_test['Open'] != 0]
+    df_test = df_test[~df_test['Open'].isnull()]
+    df_test = df_test.drop('Id', axis=1)
+
+    # convert do to JSON
+    data = json.dumps(df_test.to_dict(orient='records'))
+
+    # API Call
+    # url = 'https://rossmannapp.herokuapp.com/rossmann/predict'
+    # url = 'http://127.0.0.1:5000/rossmann/predict'
+    url = 'http://ec2-3-93-179-152.compute-1.amazonaws.com:5000/rossmann/predict'
+    header = {'Content-type': 'application/json'}
+    data = data
+
+    r = requests.post(url, data=data, headers=header)
+    print('Status Code {}'.format(r.status_code))
+
+    d1 = pd.DataFrame(r.json(), columns=r.json()[0].keys())
+
+    # calculation
+    d2 = d1[['store', 'prediction']].groupby('store').sum().reset_index()
+    # send message
+
+    # imagem
+    buf = graph(d1,store_id)
+    buf.seek(0)
+    #buf=dict(photo=buf)
+    update.message.reply_photo(buf)
+    buf.close()
+
+    msg = 'Esta loja {} venderá $ {:,.2f} nas próximas 6 semanas'.format(d2['store'].values[0], d2['prediction'].values[0])
+    update.message.reply_text(msg) 
+    
 
 def  echo(update: Update, context: CallbackContext) -> None:
     store_id = update.message.text
@@ -78,9 +154,6 @@ def  echo(update: Update, context: CallbackContext) -> None:
 
     update.message.reply_text(msg) 
     
-  
-
-
 
 def main() -> None:
     """Start the bot."""
@@ -95,7 +168,10 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("help", help_command))
 
     # on non command i.e message - echo the message on Telegram
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+    #dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+
+    ##
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo2))
 
     # Start the Bot
     updater.start_polling()
