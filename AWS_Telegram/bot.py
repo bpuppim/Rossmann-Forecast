@@ -60,7 +60,8 @@ def  echo(update: Update, context: CallbackContext) -> None:
     data = json.dumps(df_test.to_dict(orient='records'))
 
     # API Call
-    url = 'https://rossmannapp.herokuapp.com/rossmann/predict'
+    # url = 'https://rossmannapp.herokuapp.com/rossmann/predict'
+    url = 'http://127.0.0.1:5000/rossmann/predict'
     header = {'Content-type': 'application/json'}
     data = data
 
